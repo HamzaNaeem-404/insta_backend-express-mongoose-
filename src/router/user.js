@@ -1,6 +1,7 @@
 import { Router } from "express";
 import UserController from "../controller/user.js";
 import loginController from "../controller/auth.js";
+import loginAuth from "../middleware/loginAuthorization.js";
 
 const userRouter = new Router();
 userRouter.get("/users", UserController.getAll);

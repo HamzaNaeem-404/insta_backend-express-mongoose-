@@ -65,6 +65,40 @@ const PostController = {
     }
   },
 
+  emailPosts: async (req, res) => {
+    try {
+      const email = req.params.email;
+  
+      const posts = await postModel.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user"
+          }
+        },
+        {
+          $match: {
+            "user.email": email
+          }
+        },
+        {
+          $project: {
+            "user.user_password": 0 // eliminating password
+          }
+        }
+      ]);
+  
+      console.log(posts);
+      res.status(200).json(posts); // Send the posts as a response
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "An error occurred" });
+    }
+  }
+  
+  
 };
 
 export default PostController;

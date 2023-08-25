@@ -15,7 +15,7 @@ const UserController = {
     return res.json(user);
   },
   create: async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     const hashPassword = await bcryptjs.hash(password, 10);
 
@@ -23,6 +23,7 @@ const UserController = {
       name,
       email,
       password: hashPassword,
+      role,
     });
 
     return res.json({ message: "User created", user });
