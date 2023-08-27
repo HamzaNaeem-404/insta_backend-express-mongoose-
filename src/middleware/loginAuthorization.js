@@ -8,8 +8,10 @@ const loginAuth = (req, res, next) =>{
         }
 
         let token = header.replace("Bearer ", "" )
-        let decoded = jwt.decode(token)
-        req.user = decoded.user;
+
+        let check = jwt.decode(token)
+        req.user = check.user;
+        
         next();
     }
      catch(error)

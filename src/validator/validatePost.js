@@ -3,11 +3,12 @@ import Joi from "joi";
 const postValidator={
     create : (req, res, next)=>{
         const schema = Joi.object({
-            title: Joi.string().alphanum().min(3).max(20).required(),
+            title: Joi.string().min(3).max(20).required(),
 
-            description: Joi.string().alphanum().min(3).max(255).required(),
+            description: Joi.string().min(3).max(255).required(),
 
-            user_id: Joi.string().alphanum().required(),
+            // user_id: Joi.string().alphanum().required(),
+
         });
 
         const{error} = schema.validate(req.body);

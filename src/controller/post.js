@@ -1,7 +1,9 @@
 import postModel from "../model/Post.js";
 const PostController = {
   getAll: async (req, res) => {
-    const posts = await postModel.find().populate("user_id");
+    const {perPage, limit} = req.params;
+    const posts = await postModel.find().sort("-createdAt").skip((perPage-1)*limit).limit(limit).populate("user_id", "-password");
+
     return res.json({ posts });
   },
   getSingle: async (req, res) => {
@@ -13,14 +15,22 @@ const PostController = {
     return res.json(post);
   },
   create: async (req, res) => {
-    const body = req.body;
-    const post = await postModel.create({
-      title: body.title,
-      description: body.description,
-      user_id: body.user_id,
-    });
+    try{
+    const {title, description} = req.body;
+    
+    const user_id = req.user._id;
+    const post = await postModel.create({title, description, user_id});
 
-    return res.json({ message: "Post created", post });
+    if(!post){
+      return res.status(400).json({message: "Post creation error"})
+    }
+  
+    return res.status(200).json({ message: "Post created", post });
+  }
+  catch(error){
+    return res.status(500),json({message: "Internal Server Error", error: error})
+  }
+  
   },
 
   update: async (req, res) => {
@@ -64,6 +74,26 @@ const PostController = {
       console.log(e, "error")
     }
   },
+  recentPosts: async (req, res) => {
+
+    try {
+      const currentDate = new Date(); 
+      currentDate.setHours(0,0,0,0);
+      console.log(currentDate);
+      const post = await postModel.find({createdAt: {
+        $gte: currentDate
+        // $lt: "2023-08-25"
+        // $eq: "2023-08-27"
+      }});
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      return res.json(post);
+    }
+    catch (e) {
+      console.log(e, "error")
+    }
+  },
 
   emailPosts: async (req, res) => {
     try {
@@ -96,9 +126,76 @@ const PostController = {
       console.error(error);
       res.status(500).json({ message: "An error occurred" });
     }
+  },
+
+  searchPosts: async (req, res)=> {
+    try {
+      const query = req.params.query;
+      
+      const pattern = new RegExp(query, 'i');
+      
+      const results = await postModel.find({
+        $or: [
+          { title: { $regex: pattern } },
+          { description: { $regex: pattern } },
+        ],
+      });
+      
+      res.json(results); 
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred' });
+    }
   }
   
-  
+  // searchPosts: async (req, res)=> {
+  //     try {
+  //       const query = req.params.query;
+        
+  //       const pattern = new RegExp(query, 'i');
+        
+  //       const results = await postModel.find({
+  //         $or: [
+  //           { title: { $regex: pattern } },
+  //           { description: { $regex: pattern } },
+  //         ],
+  //       });
+        
+  //       res.json(results); 
+  //     } catch (error) {
+  //       console.error(error);
+  //       res.status(500).json({ error: 'An error occurred' });
+  //     }
+    
+
+  //   const posts = await postModel.aggregate([
+  //     {
+  //       $lookup: {
+  //         from: "users",
+  //         localField: "user_id",
+  //         foreignField: "_id",
+  //         as: "user"
+  //       }
+  //     },
+  //     {
+  //       $match: {
+  //         "user.email": email
+  //       }
+  //     },
+  //     {
+  //       $project: {
+  //         "user.user_password": 0 // eliminating password
+  //       }
+  //     }
+  //   ]);
+
+  //   console.log(posts);
+  //   res.status(200).json(posts); // Send the posts as a response
+  // } catch (error) {
+  //   console.error(error);
+  //   res.status(500).json({ message: "An error occurred" });
+  // }
+
 };
 
 export default PostController;
